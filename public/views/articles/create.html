@@ -9,7 +9,8 @@
 		<div class="control-group">
 			<label class="control-label" for="content">Content</label>
 			<div class="controls">
-				<textarea data-ng-model="content" id="content" cols="30" rows="10" placeholder="Content"></textarea>
+				<!-- <textarea data-ng-model="content" id="content" cols="30" rows="10" placeholder="Content"></textarea> -->
+				<div ui-ace="{mode:'gherkin'}" data-ng-model="content" id="content" placeholder="Content"></div>
 			</div>
 		</div>
 		<div class="control-group">
