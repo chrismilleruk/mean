@@ -40,7 +40,7 @@ var Range = require("../range").Range;
 
 var Mode = function() {
     this.HighlightRules = GherkinHighlightRules;
-    this.foldingRules = new GherkinFoldMode("\\:");
+    this.foldingRules = new GherkinFoldMode(GherkinHighlightRules.foldingKeywords);
 };
 oop.inherits(Mode, TextMode);
 
@@ -114,157 +114,17 @@ define('ace/mode/gherkin_highlight_rules', ['require', 'exports', 'module' , 'ac
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
+
+var featureKeywords = exports.featureKeywords = "Ability|Business Need|Feature";
+
+var simpleContainerKeywords = exports.simpleContainerKeywords = "Scenario|Background";
+var stepKeywords = exports.stepKeywords = "But|And|Then|When|Given|\\*";
+
+var templateContainerKeywords = exports.templateContainerKeywords = "Scenario Template|Scenario Outline";
+var templateExampleKeywords = exports.templateExampleKeywords = "Scenarios|Examples";
+
+
 var GherkinHighlightRules = function() {
-/*
-    var keywords = (
-        "and|as|assert|break|class|continue|def|del|elif|else|except|exec|" +
-        "finally|for|from|global|if|import|in|is|lambda|not|or|pass|print|" +
-        "raise|return|try|while|with|yield"
-    );
-
-    var builtinConstants = (
-        "True|False|None|NotImplemented|Ellipsis|__debug__"
-    );
-
-    var builtinFunctions = (
-        "abs|divmod|input|open|staticmethod|all|enumerate|int|ord|str|any|" +
-        "eval|isinstance|pow|sum|basestring|execfile|issubclass|print|super|" +
-        "binfile|iter|property|tuple|bool|filter|len|range|type|bytearray|" +
-        "float|list|raw_input|unichr|callable|format|locals|reduce|unicode|" +
-        "chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|" +
-        "cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|" +
-        "__import__|complex|hash|min|set|apply|delattr|help|next|setattr|" +
-        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern"
-    );
-    var keywordMapper = this.createKeywordMapper({
-        "invalid.deprecated": "debugger",
-        "support.function": builtinFunctions,
-        "constant.language": builtinConstants,
-        "keyword": keywords
-    }, "identifier");
-
-    var strPre = "(?:r|u|ur|R|U|UR|Ur|uR)?";
-
-    var decimalInteger = "(?:(?:[1-9]\\d*)|(?:0))";
-    var octInteger = "(?:0[oO]?[0-7]+)";
-    var hexInteger = "(?:0[xX][\\dA-Fa-f]+)";
-    var binInteger = "(?:0[bB][01]+)";
-    var integer = "(?:" + decimalInteger + "|" + octInteger + "|" + hexInteger + "|" + binInteger + ")";
-
-    var exponent = "(?:[eE][+-]?\\d+)";
-    var fraction = "(?:\\.\\d+)";
-    var intPart = "(?:\\d+)";
-    var pointFloat = "(?:(?:" + intPart + "?" + fraction + ")|(?:" + intPart + "\\.))";
-    var exponentFloat = "(?:(?:" + pointFloat + "|" +  intPart + ")" + exponent + ")";
-    var floatNumber = "(?:" + exponentFloat + "|" + pointFloat + ")";
-
-    var stringEscape =  "\\\\(x[0-9A-Fa-f]{2}|[0-7]{3}|[\\\\abfnrtv'\"]|U[0-9A-Fa-f]{8}|u[0-9A-Fa-f]{4})";
-
-    this.$rules = {
-        "start" : [ {
-            token : "comment",
-            regex : "#.*$"
-        }, {
-            token : "string",           // multi line """ string start
-            regex : strPre + '"{3}',
-            next : "qqstring3"
-        }, {
-            token : "string",           // " string
-            regex : strPre + '"(?=.)',
-            next : "qqstring"
-        }, {
-            token : "string",           // multi line ''' string start
-            regex : strPre + "'{3}",
-            next : "qstring3"
-        }, {
-            token : "string",           // ' string
-            regex : strPre + "'(?=.)",
-            next : "qstring"
-        }, {
-            token : "constant.numeric", // imaginary
-            regex : "(?:" + floatNumber + "|\\d+)[jJ]\\b"
-        }, {
-            token : "constant.numeric", // float
-            regex : floatNumber
-        }, {
-            token : "constant.numeric", // long integer
-            regex : integer + "[lL]\\b"
-        }, {
-            token : "constant.numeric", // integer
-            regex : integer + "\\b"
-        }, {
-            token : keywordMapper,
-            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
-        }, {
-            token : "keyword.operator",
-            regex : "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|%|<<|>>|&|\\||\\^|~|<|>|<=|=>|==|!=|<>|="
-        }, {
-            token : "paren.lparen",
-            regex : "[\\[\\(\\{]"
-        }, {
-            token : "paren.rparen",
-            regex : "[\\]\\)\\}]"
-        }, {
-            token : "text",
-            regex : "\\s+"
-        } ],
-        "qqstring3" : [ {
-            token : "constant.language.escape",
-            regex : stringEscape
-        }, {
-            token : "string", // multi line """ string end
-            regex : '"{3}',
-            next : "start"
-        }, {
-            defaultToken : "string"
-        } ],
-        "qstring3" : [ {
-            token : "constant.language.escape",
-            regex : stringEscape
-        }, {
-            token : "string",  // multi line ''' string end
-            regex : "'{3}",
-            next : "start"
-        }, {
-            defaultToken : "string"
-        } ],
-        "qqstring" : [{
-            token : "constant.language.escape",
-            regex : stringEscape
-        }, {
-            token : "string",
-            regex : "\\\\$",
-            next  : "qqstring"
-        }, {
-            token : "string",
-            regex : '"|$',
-            next  : "start"
-        }, {
-            defaultToken: "string"
-        }],
-        "qstring" : [{
-            token : "constant.language.escape",
-            regex : stringEscape
-        }, {
-            token : "string",
-            regex : "\\\\$",
-            next  : "qstring"
-        }, {
-            token : "string",
-            regex : "'|$",
-            next  : "start"
-        }, {
-            defaultToken: "string"
-        }]
-    };*/
-
-    var featureKeywords = exports.featureKeywords = "Ability|Business Need|Feature";
-    
-    var simpleContainerKeywords = exports.simpleContainerKeywords = "Scenario|Background";
-    var stepKeywords = exports.stepKeywords = "But|And|Then|When|Given|\\*";
-
-    var templateContainerKeywords = exports.templateContainerKeywords = "Scenario Template|Scenario Outline";
-    var templateExampleKeywords = exports.templateExampleKeywords = "Scenarios|Examples";
 
     var rules = {
         common: {
@@ -288,10 +148,10 @@ var GherkinHighlightRules = function() {
                     token : "comment.multiline.start",
                     regex : "(?:\\/\\*)",
                     next  : "comment-multiline",
-                    onMatch: function(value) {
-                        console.log("comment.multiline.start", arguments);
-                        return this.token;
-                    }
+                    // onMatch: function(value) {
+                    //     console.log("comment.multiline.start", arguments);
+                    //     return this.token;
+                    // }
                 },
                 rules: [
                     {
@@ -338,26 +198,26 @@ var GherkinHighlightRules = function() {
             {
                 token : "keyword.feature",
                 regex : "^\\s*(?:"+featureKeywords+"):",
-                onMatch: function(value) {
-                    console.log("feature: ", arguments);
-                    return this.token;
-                }
+                // onMatch: function(value) {
+                //     console.log("feature: ", arguments);
+                //     return this.token;
+                // }
             },
             {
                 token : "keyword.stepContainer",
                 regex : "^\\s*(?:"+simpleContainerKeywords+"):",
-                onMatch: function(value) {
-                    console.log("keyword.stepContainer", arguments);
-                    return this.token;
-                }
+                // onMatch: function(value) {
+                //     console.log("keyword.stepContainer", arguments);
+                //     return this.token;
+                // }
             },
             {
                 token : "keyword.stepContainer.template",
                 regex : "^\\s*(?:"+templateContainerKeywords+"):",
-                onMatch: function(value) {
-                    console.log("keyword.stepContainer.template", arguments);
-                    return this.token;
-                }
+                // onMatch: function(value) {
+                //     console.log("keyword.stepContainer.template", arguments);
+                //     return this.token;
+                // }
             },
             {
                 token : "keyword.step",
@@ -369,6 +229,7 @@ var GherkinHighlightRules = function() {
             }
         ],
         "container": [
+        // Don't do this. Fix with a linter.
             rules.common.placeholder,
             rules.common.string,
             rules.common.comment,
@@ -478,17 +339,35 @@ var GherkinHighlightRules = function() {
 
 oop.inherits(GherkinHighlightRules, TextHighlightRules);
 
+GherkinHighlightRules.foldingKeywords = [featureKeywords, [templateContainerKeywords, simpleContainerKeywords], templateExampleKeywords];
+
 exports.GherkinHighlightRules = GherkinHighlightRules;
 });
 
-define('ace/mode/folding/gherkin', ['require', 'exports', 'module' , 'ace/lib/oop', 'ace/mode/folding/fold_mode'], function(require, exports, module) {
+define('ace/mode/folding/gherkin', ['require', 'exports', 'module' , 'ace/lib/oop', 'ace/range', 'ace/mode/folding/fold_mode'], function(require, exports, module) {
 
 
 var oop = require("../../lib/oop");
+var Range = require("../../range").Range
 var BaseFoldMode = require("./fold_mode").FoldMode;
 
+var getArrayReduceFn = function(joinWith) {
+    var reduceFn = function(acc, val, ind, arr) { 
+        if (typeof val.reduce === "function") {
+            return val.reduce(reduceFn, acc);
+        }
+        return [acc, val].filter(function(v){return v;}).join(joinWith);
+    };
+    return reduceFn;
+};
+
 var FoldMode = exports.FoldMode = function(markers) {
-    this.foldingStartMarker = new RegExp("([\\[{])(?:\\s*)$|(" + markers + ")(?:\\s*)(?:#.*)?$");
+    this.foldMarkers = markers;
+
+    var allMarkers = this.foldMarkers.reduce(getArrayReduceFn("|"), "");
+    this.foldingStartMarker = new RegExp("(" + allMarkers + ")(?:\\s*)(?:.*)?$");
+
+    //console.log("FoldMode", markers, this.foldingStartMarker);    
 };
 oop.inherits(FoldMode, BaseFoldMode);
 
@@ -497,14 +376,84 @@ oop.inherits(FoldMode, BaseFoldMode);
     this.getFoldWidgetRange = function(session, foldStyle, row) {
         var line = session.getLine(row);
         var match = line.match(this.foldingStartMarker);
+        //console.log("getFoldWidgetRange", foldStyle, line, match);
         if (match) {
-            if (match[1])
-                return this.openingBracketBlock(session, match[1], row, match.index);
-            if (match[2])
-                return this.indentationBlock(session, row, match.index + match[2].length);
-            return this.indentationBlock(session, row);
+            return this.implicitBlock(session, match[1], row, row.length);
+            // if (match[1])
+            //     return this.implicitBlock(session, match[1], row, match.index);
+            // if (match[2])
+            //     return this.indentationBlock(session, row, match.index + match[2].length);
+            // return this.indentationBlock(session, row);
         }
     }
+
+    this.getStopMarkers = function(startMarker) {
+        // The fold markers are arranged hierarchically.
+        // For any given keyword we want to fold to an equivalent or higher level keyword.
+        // e.g. Scenario folds to Scenario, Scenario Outline or Feature
+        // e.g. Feature folds to Feature
+        var found = false;
+        var flatten = getArrayReduceFn("|");
+
+        var stopMarkers = this.foldMarkers.filter(function(val) {
+                if (found) {
+                    return false;
+                }
+                
+                items = flatten("", val).split("|");
+
+                if (items.indexOf(startMarker) > -1) {
+                    found = true;
+                }
+                return true;
+            });
+        
+        //console.log("stopMarkers", startMarker, flatten("", stopMarkers));
+
+        return stopMarkers;
+    };
+
+    this.implicitBlock = function(session, startMarker, row, column) {
+        var flatten = getArrayReduceFn("|");
+        var stopMarkers = flatten("", this.getStopMarkers(startMarker));
+
+        //console.log('implicitBlock', startMarker, row, column, stopMarkers);
+
+        var reWhitespace = /^\s*(@.*)?$/;
+        var reStopMarker = new RegExp("^\\s*("+ stopMarkers +")");
+        var line = session.getLine(row);
+        
+        var startColumn = column || line.length;
+        var maxRow = session.getLength();
+        var startRow = row;
+        var endRow = row;
+
+        while (++row < maxRow) {
+            var line = session.getLine(row);
+            var stop = line.search(reStopMarker);
+            var ws = line.search(reWhitespace);
+
+            if (stop > -1)
+            {
+                // stop marker was found so exit the while loop.
+                break;
+            }
+
+            if (ws == -1)
+            {
+                // not a stop marker and not whitespace
+                // therefore this line contains content.
+                endRow = row;
+
+                //console.log('content found', startMarker, row, line.length, line, ws);
+            }
+        }
+
+        if (endRow > startRow) {
+            var endColumn = session.getLine(endRow).length;
+            return new Range(startRow, startColumn, endRow, endColumn);
+        }
+    };
 
 }).call(FoldMode.prototype);
 
